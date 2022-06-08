@@ -106,6 +106,56 @@ test('title and url are required !', async () => {
 
 })
 
+//test delete functionality 
+
+test('delete a blog with valid id', async () => {
+
+    const initBlogs = await api.get('/api/blogs')
+    let idToDelete = initBlogs.body[0].id
+
+    await api
+    .delete(`/api/blogs/${idToDelete}`)
+    .expect(204)
+
+    const lastBlogs = await api.get('/api/blogs')
+    expect(lastBlogs.body.length).toBe(helper.blogs.length -1)
+})
+
+/* test('delete a blog with not valid id', async () => {
+
+    let idToDelete ='jhjkhJHbhjBjhbè_y78'
+
+    await api
+    .delete(`/api/blogs/${idToDelete}`)
+    .expect(404)
+
+    const lastBlogs = await api.get('/api/blogs')
+    expect(lastBlogs.body.length).toBe(helper.blogs.length)
+}) */
+
+//update test :
+
+test('update existing Blog ', async () =>{
+    const blogsBefore = await api.get('/api/blogs')
+    const idToUpdate = blogsBefore.body[0].id
+    console.log(blogsBefore.body[0])
+    const newBlog = {
+        title: 'new Blog ..',
+        author: 'chilloul',
+        url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
+        likes: 7,
+    } 
+    await api
+    .put(`/api/blogs/${idToUpdate}`)
+    .send(newBlog)
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+
+    const blogsAfter = await api.get('/api/blogs')
+    console.log(blogsAfter.body[0])
+    expect(blogsAfter.body[0]).not.toEqual(blogsBefore.body[0])
+})
+
 afterAll(()=>{
     mongoose.connection.close()
 })
