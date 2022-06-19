@@ -3,6 +3,8 @@ const app = require('../app')
 const supertest = require('supertest')
 const helper = require('./helper')
 const Blog = require('../models/blog')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
 const api = supertest(app)
 
 //initializing the dataBase 
@@ -15,7 +17,17 @@ beforeEach(async ()=>{
         await newBlog.save()
         console.log('saved')
     }
+    await User.deleteMany({})
+        const passwordHash = await bcrypt.hash('root', 10)
+        const newUser = {
+            username : 'root',
+            name : 'mohamed',
+            passwordHash : passwordHash
+        }
+        const user = new User(newUser)
+        await user.save()
 
+        
 })
 
 //step 1
@@ -51,8 +63,17 @@ test('saving a new blog to the db', async () => {
         likes: 2,
     }
 
+    // login and getting the token 
+    const login = await api
+    .post('/api/login')
+    .send({
+        username : 'root',
+        password : 'root'
+    })
+    console.log(login.body.token)
     await api
     .post('/api/blogs')
+    .set('Authorization', `bearer ${login.body.token}`)
     .send(newBlog)
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -74,8 +95,17 @@ test('if likes missed it will get the default value 0', async () => {
         url: "http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html",
     }
 
+    // login and getting the token 
+    const login = await api
+    .post('/api/login')
+    .send({
+        username : 'root',
+        password : 'root'
+    })
+
     await api
     .post('/api/blogs')
+    .set('Authorization', `bearer ${login.body.token}`)
     .send(newBlog)
     .expect(201)
 
@@ -90,13 +120,21 @@ test('if likes missed it will get the default value 0', async () => {
 
 test('title and url are required !', async () => {
     const newBlog = {
-        title: "New Blog",
         author: "Chilloul mohamed",
         url: "http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html",
     }
 
+    // login and getting the token 
+    const login = await api
+    .post('/api/login')
+    .send({
+        username : 'root',
+        password : 'root'
+    })
+
     await api
     .post('/api/blogs')
+    .set('Authorization', `bearer ${login.body.token}`)
     .send(newBlog)
     .expect(400)
 
@@ -113,8 +151,17 @@ test('delete a blog with valid id', async () => {
     const initBlogs = await api.get('/api/blogs')
     let idToDelete = initBlogs.body[0].id
 
+    // login and getting the token 
+    const login = await api
+    .post('/api/login')
+    .send({
+        username : 'root',
+        password : 'root'
+    })
+    console.log(login.body.token)
     await api
     .delete(`/api/blogs/${idToDelete}`)
+    .set('Authorization', `bearer ${login.body.token}`)
     .expect(204)
 
     const lastBlogs = await api.get('/api/blogs')
