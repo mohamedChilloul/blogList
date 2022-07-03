@@ -23,7 +23,12 @@ app.use(middleware.tokenExtractor)
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', userRouter)
 app.use('/api/login', loginRouter)
+require('dotenv').config()
 
+if(process.env.NODE_ENV === 'test'){
+    const testRouter = require('./controllers/tests')
+    app.use('/api/testing', testRouter)
+}
 app.use(errorHandler)
 
 module.exports = app

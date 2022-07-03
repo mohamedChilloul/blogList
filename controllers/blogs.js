@@ -25,12 +25,17 @@ blogRouter.post('/', middleware.userExtractor, async (req,response)=>{
     //console.log('user : => ', user)
     const newBlog = new Blog({...req.body, user : user._id})
     if (!newBlog.title || !newBlog.url){
-        response.status(400).end()
+        response.status(400).json({
+            error : "missing title or url !"
+        })
     }else{
         const savedBlog = await newBlog.save()
+        console.log('savedBlog',savedBlog)
         user.blogs = user.blogs.concat(savedBlog._id)
         await user.save()
-        response.status(201).json(savedBlog)
+        const returnedBlog = await Blog.findById(savedBlog._id).populate('user', {username : 1})
+        console.log('returnedBlog', returnedBlog)
+        response.status(201).json(returnedBlog)
     }
 })
 
@@ -53,11 +58,18 @@ blogRouter.delete('/:id', middleware.userExtractor, async (request, response) =>
 blogRouter.put('/:id', async (request, response) => {
     const newBlog = request.body
     let id = request.params.id
-    const updatedBlog = await Blog.findByIdAndUpdate(id, newBlog, {new : true})
-    if(updatedBlog){
-        response.status(200).json(updatedBlog)
-    }else {
-        response.status(404).end()
+    let userId = request.user
+    const user = await User.findById(userId)
+    try {
+        const updatedBlog = await Blog.findByIdAndUpdate(id, newBlog, {new : true})
+        if(updatedBlog){
+            const returnedBlog = await Blog.findById(updatedBlog._id).populate('user', {username : 1})
+            response.status(200).json(returnedBlog)
+        }else {
+            response.status(404).end()
+        }
+    } catch (error) {
+        console.log('error catched',error)
     }
 })
 

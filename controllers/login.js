@@ -6,13 +6,15 @@ const config = require('../utils/config')
 
 
 loginRouter.post('/', async (req, res) => {
+    console.log(req.body)
     const {username, password} = req.body 
 
     const user = await User.findOne({username})
-    const passCorrect = bcrypt.compare(password, user.passwordHash)
-
-    if(!user || !passCorrect){
-        return res.json(401).json({
+    
+    const passCorrect = user === null ? false : await bcrypt.compare(password, user.passwordHash)
+    
+    if(!(user && passCorrect)){
+        return res.status(401).json({
             error : 'invalid user name or password'
         })
     }
